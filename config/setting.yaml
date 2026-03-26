@@ -3,7 +3,7 @@ camera:
   #左カメラのID
   left_index: 0
   #右カメラのID
-  right_index: 1
+  right_index: 2
   #物体検知に使用するメインカメラ（left / right)
   detection_source: "left"
   #画面の解像度
