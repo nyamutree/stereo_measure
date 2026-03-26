@@ -5,7 +5,7 @@ def load_settings():
     # ファイルの場所を指定
     #config_path = "config/setting.yaml"
     base_path = os.path.dirname(__file__)
-    config_path = os.path.normpath(os.path.jon(base_path,"../config/setting.yaml"))
+    config_path = os.path.normpath(os.path.join(base_path,"../config/setting.yaml"))
 
     # 指定したパスのファイルを「読み込みモード('r')」で開き、中身を読み取ります
     with open(config_path, 'r',encoding='utf-8') as f:
