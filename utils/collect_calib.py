@@ -53,7 +53,7 @@ def main():
 
             # 下部に黒いバーを作成 (高さ50ピクセル、幅は画像と同じ)
             bar_height = 50
-            status_bar = np.zeros((bar_height,preview[1],3),dtype=np.uint8)
+            status_bar = np.zeros((bar_height,preview.shape[1],3),dtype=np.uint8)
 
             # バーに文字を書き込む
             text = f"Saved: {count:02d} | [S]: Save  [Q]: Quit"
