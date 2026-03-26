@@ -95,8 +95,8 @@ def main():
             elif key == ord('q'):
                 break
             
-            else:
-                print("  >> エラー: 画像の取得に失敗しました。")
+            #else:
+            #    print("  >> エラー: 画像の取得に失敗しました。")
         
     except KeyboardInterrupt:
         print("\n強制終了されました。")
