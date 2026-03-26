@@ -50,11 +50,22 @@ def main():
 
             # プレビュー用に左右を連結して表示
             preview = np.hstack((image_L, image_R))
+
+            # 下部に黒いバーを作成 (高さ50ピクセル、幅は画像と同じ)
+            bar_height = 50
+            status_bar = np.zeros((bar_height,preview[1],3),dtype=np.uint8)
+
+            # バーに文字を書き込む
+            text = f"Saved: {count:02d} | [S]: Save  [Q]: Quit"
+            cv2.putText(status_bar, text, (20, 35), 
+                        cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
+            
+            combined = np.vstack((preview, status_bar))
+
+
             # 少し縮小して表示（画面に収まりやすくするため）
             show_frame =cv2.resize(preview, (None, None), fx=0.8, fy=0.8)
-            
-            cv2.putText(show_frame, f"Saved: {count}", (10, 30), 
-                        cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+   
             cv2.imshow("Calibration Capture (L | R)", show_frame)
 
             key = cv2.waitKey(1) & 0xFF
