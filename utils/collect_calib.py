@@ -60,13 +60,23 @@ def main():
             cv2.putText(status_bar, text, (20, 35), 
                         cv2.FONT_HERSHEY_SIMPLEX, 0.8, (255, 255, 255), 2)
             
+            #画像とバーを垂直に連結
             combined = np.vstack((preview, status_bar))
+
+            # 横幅を 1000px くらいに固定すると、VNCでも見やすくなります
+            target_width = 1000 
+            scale = target_width / combined.shape[1]
+            target_height = int(combined.shape[0] * scale)
+            
+            show_frame = cv2.resize(combined, (target_width, target_height))
+            
+            cv2.imshow("Calibration Capture (L | R)", show_frame)
 
 
             # 少し縮小して表示（画面に収まりやすくするため）
-            show_frame =cv2.resize(preview, (None, None), fx=0.8, fy=0.8)
+            ##show_frame =cv2.resize(preview, (None, None), fx=0.8, fy=0.8)
    
-            cv2.imshow("Calibration Capture (L | R)", show_frame)
+            ##cv2.imshow("Calibration Capture (L | R)", show_frame)
 
             key = cv2.waitKey(1) & 0xFF
 
