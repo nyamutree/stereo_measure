@@ -1,0 +1,20 @@
+#カメラの基本設定
+camera:
+  #左カメラのID
+  left_index: 0
+  #右カメラのID
+  right_index: 1
+  #物体検知に使用するメインカメラ（left / right)
+  detection_source: "left"
+  #画面の解像度
+  width:  640
+  height: 480
+
+#測定用の数値
+measure:
+  #カメラの中心間の距離（㎜）
+  baseline_mm: 75.0
+  #カメラのレンズ性能
+  focal_length_px: 500.0
+  #背景と物体との区別精度
+  diff_threhold: 30
