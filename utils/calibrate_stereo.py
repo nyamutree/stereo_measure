@@ -2,14 +2,22 @@ import cv2
 import numpy as np
 import os
 import glob
+import sys
 
 parent_dir = os.path.join(os.path.dirname(__file__),'..')
+
+sys.path.append(os.path.normpath(parent_dir))
+
+from core.config_loader import load_settings
+
 img_dir =  os.path.join(parent_dir,"data","calibration")
 save_path = os.path.join(parent_dir,"config", "stereo_params.npz")
 
+settings = load_settings()
+
 # --- チェッカーボードの設定 (お手持ちのボードに合わせて修正してください) ---
-PATTERN_SIZE = (9, 6)  # 交点の数（列, 行）
-SQUARE_SIZE = 15.0      # マスの実サイズ (mm)
+PATTERN_SIZE = ((settings["checkerboard"]["num_squares_x"]-1), (settings["checkerboard"]["num_squares_y"]-1))  # 交点の数（列, 行）
+SQUARE_SIZE = settings["checkerboard"]["square_size_mm"]      # マスの実サイズ (mm)
 
 # 3D空間での理想的な点座標を作成(ゆがみを計算するための基準（チェッカーボードの形について）を作成)
 
