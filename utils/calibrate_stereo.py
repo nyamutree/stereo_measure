@@ -19,7 +19,7 @@ objp = np.zeros((PATTERN_SIZE[0]*PATTERN_SIZE[1],3),np.float32)
 # 上で作った0だった座標に**「正しい位置（理想の座標）」**を書き込み
 # mgrid を使って、(0,0),(1,0),(2,0)... と規則正しい連番を振る
 # SQUARE_SIZE（15mm）を掛けることで、**「0番目の点は(0mm, 0mm)、隣の点は(15mm, 0mm)...」**という風に、現実世界のミリ単位の座標を完成
-objp[:,:2] = np.mrrid[0:PATTERN_SIZE[0],0:PATTERN_SIZE[1]].T.reshape(-1,2)*SQUARE_SIZE
+objp[:,:2] = np.mgrid[0:PATTERN_SIZE[0],0:PATTERN_SIZE[1]].T.reshape(-1,2)*SQUARE_SIZE
 
 # 現実世界での正しい座標（上で作った objp）」を、成功した枚数分だけ保存
 objpoints = [] #3D_Point
