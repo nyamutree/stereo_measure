@@ -8,7 +8,7 @@ img_dir =  os.path.join(parent_dir,"data","calibration")
 save_path = os.path.join(parent_dir,"config", "stereo_params.npz")
 
 # --- チェッカーボードの設定 (お手持ちのボードに合わせて修正してください) ---
-PATTERN_SIZE = (10, 7)  # 交点の数（列, 行）
+PATTERN_SIZE = (9, 6)  # 交点の数（列, 行）
 SQUARE_SIZE = 15.0      # マスの実サイズ (mm)
 
 # 3D空間での理想的な点座標を作成(ゆがみを計算するための基準（チェッカーボードの形について）を作成)
