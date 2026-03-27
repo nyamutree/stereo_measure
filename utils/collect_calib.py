@@ -12,7 +12,7 @@ from core.config_loader import load_settings
 
 
 #サーバーとして動く宣言
-app = Flask(__name__)
+app = Flask(__name__, template_folder=os.path.join(parent_dir, 'templates'))
 
 #設定の読み込み
 settings = load_settings()
