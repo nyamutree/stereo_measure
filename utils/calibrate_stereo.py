@@ -34,6 +34,7 @@ R_imgs = sorted(glob.glob(os.path.join(img_dir,"right*.jpg")))
 
 print(f"{len(L_imgs)} 組の画像を処理中...")
 
+print(f"DEBUG: 読み込んだ画像の数 = 左:{len(L_imgs)}, 右:{len(R_imgs)}")
 for f_l, f_r in zip(L_imgs,R_imgs):
     img_L = cv2.imread(f_l)
     img_R = cv2.imread(f_r)
