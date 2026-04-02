@@ -25,6 +25,16 @@
         <button class="btn" onclick="saveImage()">画像を保存（SAVE）</button>
         <p id="status">Ready</p>
 
+        <div style="margin-top: 30px; padding: 15px; border: 1px solid #444; border-radius: 8px;">
+            <h4>Calibration</h4>
+            <button id = "calib-btn" class = "btn btn-primary"style="width :100%" disabled>
+                キャリブレーション開始(<span id="img-count">0</span> / 20)
+            </button>
+
+            <p id="status-msg" style="margin-top: 10px; font-size: 0.9em; color: #ccc;"></p>
+
+        </div>
+
         <script>
             /* JavaScript：ボタンが押された時の「動き」を書きます */
             async function saveImage() {
@@ -39,6 +49,67 @@
                 }catch(e){
                     status.innerText="通信エラーが発生しました";
                 }
+            }
+
+            // --- [1] 枚数チェック回路 (fetch) ---
+            // 定期的にラズパイの /get_count にアクセスして、現在の枚数を確認します
+            function updateStatus(){
+                //fetch() <- 画面切り替えせずに裏側でサーバーと通信する
+                ///get_countにリクエストを送り戻り値を受信
+                fetch('/get_count')
+                .then(response => response.json()) //ラズパイからの返答(JSON)を解析
+                .then(data =>{
+                    const count = data.count;
+                    const btn = document.getElementById('calib-btn');
+                    const span = document.getElementById('img-count');
+
+                    span.innerText = count; // 画面の数字を更新
+
+                    // 20枚以上貯まったらボタンを押せるようにする回路
+
+                    if (count >= 20){
+                        btn.disabled =false;
+                        btn.classList.replace('btn-primary', 'btn-success')
+
+                    }
+
+                });
+
+            }
+            
+            // 3秒ごとに自動で枚数を確認しに行くタイマーをセット
+            setInterval(updateStatus, 3000);
+
+            // --- [2] 実行命令回路 (subprocess呼び出し) ---
+            // // ボタンが押されたら /run_calibration に命令を送ります
+            //document.getElementById('ID名')　<- HTMLの中から、特定のIDが付いた部品を指名
+            document.getElementById('calib-btn').onclick = function(){
+                const btn = this;
+                const msg = document.getElementById('status-msg');
+
+                btn.disabled = true;
+                btn.innerText  = "計算中．．．"
+                btn.innerText = "ラズパイが画像を解析しています。30秒〜1分ほどかかります...";
+
+                fetch('/run_calibration')
+                .then(response =>response.json())
+                .then(data => {
+                    if(data.status === 'success'){
+                        alert("🎉 " + data.message);
+                        msg.innerText ="設定ファイル(stereo_params.npz)を更新しました！";
+                    }else{
+                        alert("❌ エラーが発生しました:\n" + data.message);
+                        msg.innerText = "失敗しました。チェッカーボードが正しく写っているか確認してください。";
+                    }
+                    // 終わったらボタンを元に戻す
+                    btn.innerText = "キャリブレーション再実行";
+                    btn.disabled = false;
+
+                })
+                .catch(error => {
+                    alert("通信エラーが発生しました");
+                    btn.disabled = false;
+                });
             }
         </script>
     </body>
