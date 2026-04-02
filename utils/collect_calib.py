@@ -28,6 +28,10 @@ base_path = os.path.abspath(os.path.dirname(__file__))
 project_root = os.path.abspath(os.path.join(base_path, '..'))
 save_dir = os.path.join(project_root, "data", "calibration")
 
+save_dir = os.path.normpath(os.path.join(parent_dir, "data", "calibration"))
+
+print(f"DEBUG: 画像を確認するディレクトリ -> {save_dir}")
+
 if not os.path.exists(save_dir):
     os.makedirs(save_dir)
 
