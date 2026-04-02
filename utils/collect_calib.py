@@ -1,8 +1,11 @@
 import cv2
 import os
 import sys
+import glob        
+import subprocess  
+import subprocess # 外部プログラムを実行するために必要
 import numpy as np
-from flask import Flask, Response, render_template
+from flask import Flask, Response, render_template, jsonify
 
 parent_dir = os.path.join(os.path.dirname(__file__),'..')
 #上の行で造ったパスを整形して、プロジェクト全体から参照できるようにする
@@ -171,6 +174,47 @@ def save():
 #        cap_L.release()
 #        cap_R.release()
 #        print(f"--- 終了。合計 {count} セットの画像を保存しました ---")
+
+@app.route('/get_count')
+def get_count():
+    """現在保存されている画像のペア数を返す"""
+    # left*.jpgのリストを取得して数を数える
+    left_imgs = glob.glob(os.path.join(save_dir,"left*.jpg"))
+    return jsonify({"count":len(left_imgs)})
+
+@app.route('/run_calibration')
+def run_caribration():
+    """キャリブレーション計算スクリプトを実行する"""
+    # 安全のためにサーバーでも枚数を確認する
+    # glob.glob() <- 指定したフォルダ内から該当のファイルをすべて探し出し、リストにする
+    left_imgs = glob.glob(os.path.join(save_dir, "left*.img"))
+
+    if len(left_imgs) < 20:
+        # jsonify(...) <-JavaScriptが理解しやすい「JSON」と形式に変換
+        return jsonify({"status": "error", "message": f"画像が足りません（現在{len(left_imgs)}枚）"})
+    
+    try:
+        # 計算スクリプト（calibrate_stereo.py）のパスを指定
+        # utils フォルダ内にある想定です
+        script_path = os.path.join(parent_dir,"utils","calibrate_stereo.py")
+
+        # 外部プロセスとして実行し、完了を待つ
+        # capture_output=True にすることで、エラーが出た場合にその内容を取得できます
+        # ["python3", script_path] <- ターミナルで python3 utils/calibrate_stereo.py とするときと同じ指示をラズパイに出す
+        # capture_output=True <- 計算プログラムで画面に出力したログを変数の中に保存
+        # text=True　<- 保存したログを人が読めるテキストとして扱う
+        result = subprocess.run(["python3", script_path],capture_output=True,text=True)
+
+        if result.returncode == 0:
+            return jsonify({"status": "success", "message": "キャリブレーションが完了しました！"})
+        else:
+            return jsonify({"status": "error", "message": result.stderr})
+
+    except Exception as e:
+        return jsonify({"status":"error", "massage":str(e)})
+
+
+
 
 if __name__ == "__main__":
     try:
