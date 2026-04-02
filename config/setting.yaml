@@ -18,3 +18,13 @@ measure:
   focal_length_px: 500.0
   #背景と物体との区別精度
   diff_threhold: 30
+
+#キャリブレーション用チェッカーマーク数値
+checkerboard:
+  num_squares_x: 10
+  num_squares_y: 7
+  # 1マスのサイズ (mm)
+  square_size_mm: 15.0
+
+
+
