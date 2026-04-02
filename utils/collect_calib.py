@@ -28,8 +28,6 @@ base_path = os.path.abspath(os.path.dirname(__file__))
 project_root = os.path.abspath(os.path.join(base_path, '..'))
 save_dir = os.path.join(project_root, "data", "calibration")
 
-save_dir = os.path.normpath(os.path.join(parent_dir, "data", "calibration"))
-
 print(f"DEBUG: 画像を確認するディレクトリ -> {save_dir}")
 
 if not os.path.exists(save_dir):
@@ -191,7 +189,7 @@ def run_caribration():
     """キャリブレーション計算スクリプトを実行する"""
     # 安全のためにサーバーでも枚数を確認する
     # glob.glob() <- 指定したフォルダ内から該当のファイルをすべて探し出し、リストにする
-    left_imgs = glob.glob(os.path.join(save_dir, "left*.img"))
+    left_imgs = glob.glob(os.path.join(save_dir, "left*.jpg"))
 
     if len(left_imgs) < 20:
         # jsonify(...) <-JavaScriptが理解しやすい「JSON」と形式に変換
