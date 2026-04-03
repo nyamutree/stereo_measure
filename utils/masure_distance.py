@@ -19,16 +19,29 @@ def main():
     
     data = np.load(params_path)
     # 補正用マップの取得（映像を真っ直ぐにするための型紙）
+# --- [修正] データの名前を自動で判別して読み込む回路 ---
+    # npzファイルの中に含まれている全ての名前(keys)を取得します
+    keys = data.files
+    print(f"DEBUG: 保存されているデータ名 -> {keys}")
+
+    # 名前が 'mapL1' か 'map_L1' かを自動で判断して代入
+    mL1_key = 'map_L1' if 'map_L1' in keys else 'mapL1'
+    mL2_key = 'map_L2' if 'map_L2' in keys else 'mapL2'
+    mR1_key = 'map_R1' if 'map_R1' in keys else 'mapR1'
+    mR2_key = 'map_R2' if 'map_R2' in keys else 'mapR2'
+
     try:
-        map_L1 = data['map_L1']
-        map_L2 = data['map_L2']
-        map_R1 = data['map_R1']
-        map_R2 = data['map_R2']
-    except KeyError:
-        map_L1 = data['mapL1']
-        map_L2 = data['mapL2']
-        map_R1 = data['mapR1']
-        map_R2 = data['mapR2']      
+        map_L1 = data[mL1_key]
+        map_L2 = data[mL2_key]
+        map_R1 = data[mR1_key]
+        map_R2 = data[mR2_key]
+        Q = data['Q']
+        print("DEBUG: データの読み込みに成功しました！")
+    except KeyError as e:
+        print(f"エラー: 必要なデータ {e} がファイル内に見つかりません。")
+        print(f"現在入っているデータ: {keys}")
+        return
+    # --------------------------------------------------     
 
     # 距離計算用の行列 (Q行列)
     Q = data['Q']
