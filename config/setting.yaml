@@ -24,7 +24,7 @@ checkerboard:
   num_squares_x: 10
   num_squares_y: 7
   # 1マスのサイズ (mm)
-  square_size_mm: 15.0
+  square_size_mm: 20.0
 
 
 
