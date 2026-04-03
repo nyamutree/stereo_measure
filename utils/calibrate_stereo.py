@@ -74,6 +74,16 @@ ret, m1, d1, m2, d2, R, T, E, F =cv2.stereoCalibrate(
     gray_L.shape[::-1], criteria=crireria, flags=flags
 )
 
+# --- [追加] 平行化（Rectification）の計算 ---
+# 左右のカメラ映像を水平に揃え、歪みを取り除くための「型紙」を作ります
+R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(m1, d1, m2, d2, gray_L.shape[::-1], R, T)
+
+# 実際の補正用マップ（型紙）を作成
+mapL1, mapL2  = cv2.initUndistortRectifyMap(m1, d1, R1, P1, gray_L.shape[::-1], cv2.CV_16SC2)
+mapR1, mapR2  = cv2.initUndistortRectifyMap(m2, d2, R2, P2, gray_R.shape[::-1], cv2.CV_16SC2)
+
+
 # 結果を保存
-np.savez(save_path, mtx_L=m1, dist_L=d1, mtx_R=m2, dist_R=d2, R=R, T=T )
+np.savez(save_path, mtx_L=m1, dist_L=d1, mtx_R=m2, dist_R=d2, R=R, T=T,
+         mapL1 = mapL1, mapL2 = mapL2, mapR1 = mapR1, mapR2 = mapR2, Q = Q )
 print(f"🎉 完了！設定ファイルを保存しました: {save_path}")
