@@ -66,7 +66,7 @@ def main():
         h, w = imgL_gray.shape
         s = 10
         # --- [安定化回路] 中心付近の21x21エリアの値を統計処理 ---
-        center_region = points_3D[h//2-s, : h//2+s, w//2-s, w//2+s, 2]
+        center_region = points_3D[h//2-s : h//2+s, w//2-s : w//2+s, 2]
         #center_dist = points_3D[h//2, w//2, 2] / 10.0 # mm -> cm 変換 (// を使うと整数で計算)
         
         # 不正な値（0以下や無限大）を除外
