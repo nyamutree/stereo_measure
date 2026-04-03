@@ -33,7 +33,7 @@ def main():
     # 探し出すアルゴリズム
     # numDisparities: どれだけ遠近の幅を探すか(16の倍数)
     # blockSize：どれくらいの大きさの塊で一致する場所を探すか(奇数で設定)
-    stereo =  cv2.StereoBM_create(numDisparities=64, blockSize=15)
+    stereo =  cv2.StereoBM_create(numDisparities=128, blockSize=15)
 
     print ("距離測定を開始します... [q]キーで終了") 
 
