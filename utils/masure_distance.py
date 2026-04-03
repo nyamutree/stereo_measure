@@ -19,8 +19,17 @@ def main():
     
     data = np.load(params_path)
     # 補正用マップの取得（映像を真っ直ぐにするための型紙）
-    map_L1,map_L2 = data['mapL1'], data['mapL2']
-    map_R1,map_R2 = data['mapR1'], data['mapR2']
+    try:
+        map_L1 = data['map_L1']
+        map_L2 = data['map_L2']
+        map_R1 = data['map_R1']
+        map_R2 = data['map_R2']
+    except KeyError:
+        map_L1 = data['mapL1']
+        map_L2 = data['mapL2']
+        map_R1 = data['mapR1']
+        map_R2 = data['mapR2']      
+
     # 距離計算用の行列 (Q行列)
     Q = data['Q']
 
