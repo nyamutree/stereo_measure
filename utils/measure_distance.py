@@ -19,31 +19,8 @@ def main():
     
     data = np.load(params_path)
     # 補正用マップの取得（映像を真っ直ぐにするための型紙）
-# --- [修正] データの名前を自動で判別して読み込む回路 ---
-    # npzファイルの中に含まれている全ての名前(keys)を取得します
-    keys = data.files
-    print(f"DEBUG: 保存されているデータ名 -> {keys}")
-
-    # 名前が 'mapL1' か 'map_L1' かを自動で判断して代入
-    mL1_key = 'map_L1' if 'map_L1' in keys else 'mapL1'
-    mL2_key = 'map_L2' if 'map_L2' in keys else 'mapL2'
-    mR1_key = 'map_R1' if 'map_R1' in keys else 'mapR1'
-    mR2_key = 'map_R2' if 'map_R2' in keys else 'mapR2'
-
-    try:
-        map_L1 = data[mL1_key]
-        map_L2 = data[mL2_key]
-        map_R1 = data[mR1_key]
-        map_R2 = data[mR2_key]
-        Q = data['Q']
-        print("DEBUG: データの読み込みに成功しました！")
-    except KeyError as e:
-        print(f"エラー: 必要なデータ {e} がファイル内に見つかりません。")
-        print(f"現在入っているデータ: {keys}")
-        return
-    # --------------------------------------------------     
-
-    # 距離計算用の行列 (Q行列)
+    map_L1, map_L2 = data['mapL1'], data['mapL2']
+    map_R1, map_R2 = data['mapR1'], data['mapR2']
     Q = data['Q']
 
     # 2. カメラの初期化
@@ -87,13 +64,29 @@ def main():
 
         # 画面中央 (中心点) の距離を取得してみる
         h, w = imgL_gray.shape
-        center_dist = points_3D[h//2, w//2, 2] / 10.0 # mm -> cm 変換 (// を使うと整数で計算)
+        s = 10
+        # --- [安定化回路] 中心付近の21x21エリアの値を統計処理 ---
+        center_region = points_3D[h//2-s, : h//2+s, w//2-s, w//2+s, 2]
+        #center_dist = points_3D[h//2, w//2, 2] / 10.0 # mm -> cm 変換 (// を使うと整数で計算)
+        
+        # 不正な値（0以下や無限大）を除外
+        volid_depths = center_region[(center_region > 0) & (center_region < 10000)]
+
+        if len(volid_depths) > 0:
+            # 平均ではなく「中央値」を使うことで突発的なノイズを無視
+            center_dist = np.median(volid_depths) / 10.0 #mm -> cm
+        else :
+            center_dist = 0.0
+
 
         # 結果の表示
         disp_vis = cv2.normalize(disparity, None, 0, 255, cv2.NORM_MINMAX, 
                                  cv2.CV_8U)
         cv2.putText(imgL_rect, f"Distance:{center_dist:.1f}cm",(50,50),
                     cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        
+        # 画面中央に照準（赤十字）を表示
+        cv2.drawMarker(imgL_rect, (w//2, h//2), (0, 0, 255), cv2.MARKER_CROSS, 20, 2)
         
         cv2.imshow("Stereo Measure (Rectified)", imgL_rect)
         cv2.imshow("Disparity Map", disp_vis)
