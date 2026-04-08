@@ -84,7 +84,7 @@ def main():
         points_3D = cv2.reprojectImageTo3D(disparity, Q)
 
         # 画面中央 (中心点) の距離を取得してみる
-        h, w = imgL_gray.shape
+        h, w = disparity.shape
         s = 20
         # --- [安定化回路] 中心付近の21x21エリアの値を統計処理 ---
         center_region_disp = disparity_raw[h//2-s : h//2+s, w//2-s : w//2+s]
@@ -92,11 +92,11 @@ def main():
         
         # 不正な値（0以下や無限大）を除外
         #volid_depths = center_region[(center_region > 0) & (center_region < 5000.0)]
-        mask = (center_region > 0) & (center_region < 5000.0) & (np.isfinite(center_region))
-        volid_depths = center_region[mask]
+        #mask = (center_region > 0) & (center_region < 5000.0) & (np.isfinite(center_region))
+        #volid_depths = center_region[mask]
 
         # 1. 視差（ズレ）の平均的な値を取得（既に /16.0 されている想定）
-        d = np.median(volid_depths) 
+        #d = np.median(volid_depths) 
 
         # 2. 物理パラメータを直接指定（npzの解析値と実測値）
         #debag->   
