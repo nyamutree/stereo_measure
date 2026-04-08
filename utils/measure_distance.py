@@ -33,7 +33,19 @@ def main():
     # 探し出すアルゴリズム
     # numDisparities: どれだけ遠近の幅を探すか(16の倍数)
     # blockSize：どれくらいの大きさの塊で一致する場所を探すか(奇数で設定)
-    stereo =  cv2.StereoBM_create(numDisparities=128, blockSize=15)
+    # stereo =  cv2.StereoBM_create(numDisparities=128, blockSize=15)
+    stereo = cv2.StereoSGBM_create(
+        minDisparity=0,
+        numDisparities = 64,        # 16の倍数
+        blockSize = 5,              # 3～11くらい
+        P1 = 8 * 3 * 5**2,          # パラメータ（このままでOK）
+        P2 = 32 * 3 * 5**2,         # パラメータ（このままでOK）
+        disp12MaxDiff = 1,
+        uniquenessRatio = 10,
+        speckleWindowSize = 100, 
+        speckleRange = 32,
+        mode = cv2.STEREO_SGBM_MODE_SGBM_3WAY
+    )
 
     print ("距離測定を開始します... [q]キーで終了") 
 
@@ -54,7 +66,7 @@ def main():
         imgR_gray = cv2.cvtColor(imgR_rect, cv2.COLOR_BGR2GRAY)
 
         # 5. 視差 (Disparity) の計算
-        disparity = stereo.compute(imgL_gray, imgR_gray)
+        disparity = stereo.compute(imgL_gray, imgR_gray).astype(np.float32)/16.0
 
         # 6. 距離 (Depth) への変換
         # Q行列を使って、視差(pixel)を実際の座標(mm)に変換します
