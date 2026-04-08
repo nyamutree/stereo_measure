@@ -67,6 +67,15 @@ def main():
 
         # 5. 視差 (Disparity) の計算
         disparity = stereo.compute(imgL_gray, imgR_gray).astype(np.float32)/16.0
+        #debag->
+        disparity_raw = stereo.compute(imgL_rect, imgR_rect).astype(np.float32)
+        #debag <-
+
+        # 2. 画面中央付近の視差を抽出して統計処理 (ノイズ除去)
+        h, w = disparity_raw.shape
+        s = 20
+        center_region = disparity_raw[h//2-s : h//2+s, w//2-s : w//2+s]
+        #debag <-
 
         # 6. 距離 (Depth) への変換
         # Q行列を使って、視差(pixel)を実際の座標(mm)に変換します
@@ -78,7 +87,7 @@ def main():
         h, w = imgL_gray.shape
         s = 20
         # --- [安定化回路] 中心付近の21x21エリアの値を統計処理 ---
-        center_region = points_3D[h//2-s : h//2+s, w//2-s : w//2+s, 2]
+        center_region_disp = disparity_raw[h//2-s : h//2+s, w//2-s : w//2+s]
         #center_dist = points_3D[h//2, w//2, 2] / 10.0 # mm -> cm 変換 (// を使うと整数で計算)
         
         # 不正な値（0以下や無限大）を除外
@@ -86,9 +95,30 @@ def main():
         mask = (center_region > 0) & (center_region < 5000.0) & (np.isfinite(center_region))
         volid_depths = center_region[mask]
 
-        if len(volid_depths) > 0:
+        # 1. 視差（ズレ）の平均的な値を取得（既に /16.0 されている想定）
+        d = np.median(volid_depths) 
+
+        # 2. 物理パラメータを直接指定（npzの解析値と実測値）
+        #debag->   
+        valid_disp = center_region_disp[center_region_disp > 0]
+        #debag<-
+
+        #if len(volid_depths) > 0:
+        if len(valid_disp) > 0:
             # 平均ではなく「中央値」を使うことで突発的なノイズを無視
-            center_dist = np.median(volid_depths) / 10.0 #mm -> cm
+            #center_dist = np.median(volid_depths) / 10.0 #mm -> cm
+            #debag->           
+            # 実際の視差 d は「生データ / 16.0」
+            d = np.median(valid_disp) / 16.0
+            
+            # 物理パラメータ (npzの解析結果と実測値)
+            f_px = 598.0  # 今回のキャリブレーションで出た焦点距離
+            B_mm = 170.0  # あなたが定規で測ったカメラ間隔
+
+            dist_mm = (f_px * B_mm) / d
+            center_dist = dist_mm / 10.0  # mm -> cm 変換
+            #debag<-
+
         else :
             center_dist = 0.0
 
