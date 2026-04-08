@@ -109,7 +109,7 @@ def main():
             #center_dist = np.median(volid_depths) / 10.0 #mm -> cm
             #debag->           
             # 実際の視差 d は「生データ / 16.0」
-            d = np.median(valid_disp) / 16.0
+            d = np.median(valid_disp) 
             
             # 物理パラメータ (npzの解析結果と実測値)
             f_px = 598.0  # 今回のキャリブレーションで出た焦点距離
