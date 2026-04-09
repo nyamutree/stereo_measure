@@ -85,5 +85,6 @@ mapR1, mapR2  = cv2.initUndistortRectifyMap(m2, d2, R2, P2, gray_R.shape[::-1], 
 
 # 結果を保存
 np.savez(save_path, mtx_L=m1, dist_L=d1, mtx_R=m2, dist_R=d2, R=R, T=T,
-         mapL1 = mapL1, mapL2 = mapL2, mapR1 = mapR1, mapR2 = mapR2, Q = Q )
+         mapL1 = mapL1, mapL2 = mapL2, mapR1 = mapR1, mapR2 = mapR2,
+         P1 = P1, P2 = P2, Q = Q )
 print(f"🎉 完了！設定ファイルを保存しました: {save_path}")
