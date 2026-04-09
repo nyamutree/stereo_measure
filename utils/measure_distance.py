@@ -21,7 +21,16 @@ def main():
     # 補正用マップの取得（映像を真っ直ぐにするための型紙）
     map_L1, map_L2 = data['mapL1'], data['mapL2']
     map_R1, map_R2 = data['mapR1'], data['mapR2']
+
+    # --- 【重要】ここを追加：補正後のパラメータを取得 ---
+    P1 = data['P1'] # 補正後の投影行列
+    T = data['T']# カメラ間の移動ベクトル
+
     Q = data['Q']
+
+    fx_rect = P1[0,0]           # 補正後の焦点距離 (f)
+    B_calc = np.linalg.norm(T)  # キャリブレーション上のカメラ間隔 (B)
+
 
     # 2. カメラの初期化
     cap_L = cv2.VideoCapture(settings["camera"]["left_index"])
@@ -72,23 +81,34 @@ def main():
         # Q行列を使って、視差(pixel)を実際の座標(mm)に変換します
         # cv2.reprojectImageTo3D() <- 3次元復元回路 視差の情報を実際の空間のXYZ座標に変換
         # Q行列：ｷｬﾘﾌﾞﾚｰｼｮﾝで算出した焦点距離、カメラ感が詰まった「変換テーブル」
-        points_3D = cv2.reprojectImageTo3D(disparity, Q)
+        # points_3D = cv2.reprojectImageTo3D(disparity, Q)
 
         # 画面中央 (中心点) の距離を取得してみる
         h, w = imgL_gray.shape
         s = 20
         # --- [安定化回路] 中心付近の21x21エリアの値を統計処理 ---
-        center_region = points_3D[h//2-s : h//2+s, w//2-s : w//2+s, 2]
+        center_region_disp = disparity[h//2-s : h//2+s, w//2-s : w//2+s]
+        #center_region = points_3D[h//2-s : h//2+s, w//2-s : w//2+s, 2]
         #center_dist = points_3D[h//2, w//2, 2] / 10.0 # mm -> cm 変換 (// を使うと整数で計算)
         
         # 不正な値（0以下や無限大）を除外
         #volid_depths = center_region[(center_region > 0) & (center_region < 5000.0)]
-        mask = (center_region > 0) & (center_region < 5000.0) & (np.isfinite(center_region))
-        volid_depths = center_region[mask]
+        #mask = (center_region > 0) & (center_region < 5000.0) & (np.isfinite(center_region))
+        #volid_depths = center_region[mask]
+        valid_disp = center_region_disp[center_region_disp > 0]
 
-        if len(volid_depths) > 0:
+        
+        if len(valid_disp ) > 0:
             # 平均ではなく「中央値」を使うことで突発的なノイズを無視
-            center_dist = np.median(volid_depths) / 10.0 #mm -> cm
+            #center_dist = np.median(volid_depths) / 10.0 #mm -> cm
+            # --- ここを追加：抽出した有効な視差から中央値(d)を決める ---
+            d = np.median(valid_disp)
+            # 物理式： Z = (f * B) / d
+            dist_mm = (fx_rect * B_calc) / d
+            center_dist = dist_mm / 10.0
+
+            # デバッグ用にターミナルに数値を出す
+            print(f"d: {d:.2f}px, f: {fx_rect:.1f}, B: {B_calc:.1f}mm -> Z: {center_dist:.1f}cm")
         else :
             center_dist = 0.0
 
