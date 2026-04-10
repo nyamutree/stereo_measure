@@ -30,7 +30,7 @@ def main():
 
     fx_rect = P1[0,0]           # 補正後の焦点距離 (f)
     # B_calc = np.linalg.norm(T)  # キャリブレーション上のカメラ間隔 (B)
-    B_calc = abs(T[0])
+    B_calc = float(abs(T[0][0]))
 
 
     # 2. カメラの初期化
