@@ -33,17 +33,17 @@ def main():
     B_calc = float(abs(T[0][0]))
 
 
+
     # 2. カメラの初期化
     cap_L = cv2.VideoCapture(settings["camera"]["left_index"])
     cap_R = cv2.VideoCapture(settings["camera"]["right_index"])
 
     # 3. 視差計算アルゴリズム (StereoBM) の設定
     # 左右の画像の「ズレ」を探すための処理の設定
-    # cv2.StereoBM_create() <- 視差探索エンジン 左の画像の特徴が右の画像で何pixelずれているか
+    # cv2.StereoSGBM_create() <- 視差探索エンジン 左の画像の特徴が右の画像で何pixelずれているか
     # 探し出すアルゴリズム
     # numDisparities: どれだけ遠近の幅を探すか(16の倍数)
     # blockSize：どれくらいの大きさの塊で一致する場所を探すか(奇数で設定)
-    # stereo =  cv2.StereoBM_create(numDisparities=128, blockSize=15)
     blockSize = (settings["Stereo"]["blockSize"])
     stereo = cv2.StereoSGBM_create(
         minDisparity=0,
@@ -59,6 +59,14 @@ def main():
     )
 
     print ("距離測定を開始します... [q]キーで終了") 
+
+    # MOG2 というアルゴリズムを使う背景差分処理の呼び出し
+    # MOG2 <-「影」を自動で判別して無視したり、少しだけ風で揺れているカーテンなどを背景として学習
+    # history=500: 500フレーム分を背景学習に使う
+    # varThreshold=50: 値が大きいほど変化に鈍感（ノイズに強く）なる
+    # detectShadows=True: 影を検出して、測定から除外する
+    fgbg = cv2.createBackgroundSubtractorMOG2(history=500, varThreshold=50, detectShadows=True)
+
 
     while True:
         retL, frameL = cap_L.read()
@@ -79,52 +87,84 @@ def main():
         # 5. 視差 (Disparity) の計算
         disparity = stereo.compute(imgL_gray, imgR_gray).astype(np.float32)/16.0
 
-        # 6. 距離 (Depth) への変換
-        # Q行列を使って、視差(pixel)を実際の座標(mm)に変換します
-        # cv2.reprojectImageTo3D() <- 3次元復元回路 視差の情報を実際の空間のXYZ座標に変換
-        # Q行列：ｷｬﾘﾌﾞﾚｰｼｮﾝで算出した焦点距離、カメラ感が詰まった「変換テーブル」
-        # points_3D = cv2.reprojectImageTo3D(disparity, Q)
+        # ---物体検出とサイズ推定 ---
+        # 背景差分を実行して「動いた部分」を白くする
+        fgmask = fgbg.apply(imgL_rect)
 
+        # ノイズを消す（小さな白い点々を消して、形を整える）
+        kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE,(5,5))
+        fgmask = cv2.morphologyEx(fgmask, cv2.MORPH_OPEN, kernel)
+
+        # 白い塊を探す
+        contours, _ = cv2.findContours(fgmask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+
+        target_box = None #見つけた枠を保存する関数
+
+        if contours:
+            # 画面内で一番面積が大きい塊を1つ選ぶ
+            best_cnt = max(contours, key = cv2.contourArea)
+
+            # あまりに小さい（500ピクセル以下）ものはゴミとして無視
+            if(cv2.contourArea(best_cnt)>500):
+                # 塊を囲む四角形（x座標, y座標, 幅w, 高さh）を計算
+                target_box = cv2.boundingRect(best_cnt)
+            
+        # ここから、見つかった枠(target_box)を使って距離とサイズを出す
+        if target_box is not None:
+            x, y, w, h = target_box
+            cx, cy = x + w//2, y + h//2 # 物体の中心点 
+
+        # 6. 距離 (Depth) への変換
         # 画面中央 (中心点) の距離を取得してみる
-        h, w = imgL_gray.shape
-        s = 20
+        # h, w = imgL_gray.shape
+        # s = 20
         # --- [安定化回路] 中心付近の21x21エリアの値を統計処理 ---
-        center_region_disp = disparity[h//2-s : h//2+s, w//2-s : w//2+s]
-        #center_region = points_3D[h//2-s : h//2+s, w//2-s : w//2+s, 2]
-        #center_dist = points_3D[h//2, w//2, 2] / 10.0 # mm -> cm 変換 (// を使うと整数で計算)
+        # center_region_disp = disparity[h//2-s : h//2+s, w//2-s : w//2+s] # (// を使うと整数で計算)
         
         # 不正な値（0以下や無限大）を除外
-        #volid_depths = center_region[(center_region > 0) & (center_region < 5000.0)]
-        #mask = (center_region > 0) & (center_region < 5000.0) & (np.isfinite(center_region))
-        #volid_depths = center_region[mask]
-        valid_disp = center_region_disp[(center_region_disp > 1) & (center_region_disp < 200)]
+        # valid_disp = center_region_disp[(center_region_disp > 1) & (center_region_disp < 200)]
 
+        # 中心付近の視差を取得
+        d = disparity[cy, cx] 
         
-        if len(valid_disp ) > 0:
+        #if len(valid_disp ) > 0:
+        if d > 0 :
             # 平均ではなく「中央値」を使うことで突発的なノイズを無視
-            #center_dist = np.median(volid_depths) / 10.0 #mm -> cm
             # --- ここを追加：抽出した有効な視差から中央値(d)を決める ---
-            d = np.median(valid_disp)
+            #d = np.median(valid_disp)
             # 物理式： Z = (f * B) / d
             dist_mm = (fx_rect * B_calc) / d
-            center_dist = dist_mm / 10.0
+            Z_cm = dist_mm / 10.0
+
+            # --- 【ここが肝】サイズ推定の計算 ---
+            # 実寸(mm) = (ピクセル幅 * 距離Z) / 焦点距離f
+            real_w_mm = (w * dist_mm) / fx_rect
+            real_h_mm = (h * dist_mm) / fx_rect
+
+            # 画面に緑の枠を描く
+            cv2.rectangle(imgL_rect, (x, y), (x + w, y + h), (0,255, 0), 2)
+            # 結果を文字で表示
+            label = (f"Z:{Z_cm:.1f}cm W{real_w_mm/10.0:.1f}cm H{real_h_mm/10:.1f}cm")
+            cv2.putText(imgL_rect, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 255, 0), 2)
 
             # デバッグ用にターミナルに数値を出す
-            print(f"d: {d:.2f}px, f: {fx_rect:.1f}, B: {B_calc:.1f}mm -> Z: {center_dist:.1f}cm")
+            print(f"d: {d:.2f}px, f: {fx_rect:.1f}, B: {B_calc:.1f}mm -> Z: {Z_cm:.1f}cm")
         else :
-            center_dist = 0.0
+            Z_cm = 0.0
+            real_w_mm = 0.0
+            real_h_mm = 0.0
 
 
         # 結果の表示
         disp_vis = cv2.normalize(disparity, None, 0, 255, cv2.NORM_MINMAX, 
                                  cv2.CV_8U)
-        cv2.putText(imgL_rect, f"Distance:{center_dist:.1f}cm",(50,50),
-                    cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        #cv2.putText(imgL_rect, f"Distance:{Z_cm:.1f}cm",(50,50),
+        #            cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         
         # 画面中央に照準（赤十字）を表示
-        cv2.drawMarker(imgL_rect, (w//2, h//2), (0, 0, 255), cv2.MARKER_CROSS, 20, 2)
+        #cv2.drawMarker(imgL_rect, (w//2, h//2), (0, 0, 255), cv2.MARKER_CROSS, 20, 2)
         
-        cv2.imshow("Stereo Measure (Rectified)", imgL_rect)
+        cv2.imshow("Stereo Measure - Object Detection", imgL_rect)
         cv2.imshow("Disparity Map", disp_vis)
 
         if cv2.waitKey(1) & 0xFF == ord('q'): break
