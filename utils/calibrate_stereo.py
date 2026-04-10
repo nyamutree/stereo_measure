@@ -50,15 +50,20 @@ for f_l, f_r in zip(L_imgs,R_imgs):
     gray_L = cv2.cvtColor(img_L,cv2.COLOR_BGR2GRAY)
     gray_R = cv2.cvtColor(img_R,cv2.COLOR_BGR2GRAY)
 
-    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+   
     
-    ret_L,corner_L = cv2.findChessboardCorners(gray_L,PATTERN_SIZE,None)
-    ret_R,corner_R = cv2.findChessboardCorners(gray_R,PATTERN_SIZE,None)
+    ret_L,corner_L = cv2.findChessboardCorners(gray_L,PATTERN_SIZE,None,  cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE)
+    ret_R,corner_R = cv2.findChessboardCorners(gray_R,PATTERN_SIZE,None,  cv2.CALIB_CB_ADAPTIVE_THRESH + cv2.CALIB_CB_NORMALIZE_IMAGE)
 
-    corner_L = cv2.cornerSubPix(gray_L, corner_L, (11,11), (-1,-1), criteria)
-    corner_R = cv2.cornerSubPix(gray_R, corner_R, (11,11), (-1,-1), criteria)
 
     if ret_L and ret_R:
+
+        criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+
+        corner_L = cv2.cornerSubPix(gray_L, corner_L, (11,11), (-1,-1), criteria)
+        corner_R = cv2.cornerSubPix(gray_R, corner_R, (11,11), (-1,-1), criteria)
+
+
         objpoints.append(objp)
         img_Points_L.append(corner_L)
         img_Points_R.append(corner_R)
