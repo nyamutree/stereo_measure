@@ -104,15 +104,18 @@ def main():
             # 画面内で一番面積が大きい塊を1つ選ぶ
             best_cnt = max(contours, key = cv2.contourArea)
 
-            # あまりに小さい（500ピクセル以下）ものはゴミとして無視
-            if(cv2.contourArea(best_cnt)>500):
+            # あまりに小さい（500 -> 3000ピクセル以下）ものはゴミとして無視
+            if cv2.contourArea(best_cnt)>3000:
                 # 塊を囲む四角形（x座標, y座標, 幅w, 高さh）を計算
                 target_box = cv2.boundingRect(best_cnt)
             
         # ここから、見つかった枠(target_box)を使って距離とサイズを出す
         if target_box is not None:
             x, y, w, h = target_box
-            cx, cy = x + w//2, y + h//2 # 物体の中心点 
+            # cx, cy = x + w//2, y + h//2 # 物体の中心点 
+            # 枠の中央付近 10x10 マスの平均視差を使う
+            sample_region = disparity[y + h//2 -5 : y + h//2 + 5, x + w//2 - 5 : x + w//2 + 5]
+            valid_d = sample_region[sample_region > 0]
 
         # 6. 距離 (Depth) への変換
         # 画面中央 (中心点) の距離を取得してみる
@@ -125,13 +128,13 @@ def main():
         # valid_disp = center_region_disp[(center_region_disp > 1) & (center_region_disp < 200)]
 
         # 中心付近の視差を取得
-        d = disparity[cy, cx] 
+        #d = disparity[cy, cx] 
         
-        #if len(valid_disp ) > 0:
-        if d > 0 :
+        if len(valid_d ) > 0:
+        #if d > 0 :
             # 平均ではなく「中央値」を使うことで突発的なノイズを無視
             # --- ここを追加：抽出した有効な視差から中央値(d)を決める ---
-            #d = np.median(valid_disp)
+            d = np.median(valid_d)
             # 物理式： Z = (f * B) / d
             dist_mm = (fx_rect * B_calc) / d
             Z_cm = dist_mm / 10.0
