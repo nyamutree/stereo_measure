@@ -29,7 +29,8 @@ def main():
     Q = data['Q']
 
     fx_rect = P1[0,0]           # 補正後の焦点距離 (f)
-    B_calc = np.linalg.norm(T)  # キャリブレーション上のカメラ間隔 (B)
+    # B_calc = np.linalg.norm(T)  # キャリブレーション上のカメラ間隔 (B)
+    B_calc = abs(T[0])
 
 
     # 2. カメラの初期化
@@ -45,8 +46,8 @@ def main():
     # stereo =  cv2.StereoBM_create(numDisparities=128, blockSize=15)
     stereo = cv2.StereoSGBM_create(
         minDisparity=0,
-        numDisparities = 64,        # 16の倍数
-        blockSize = 5,              # 3～11くらい
+        numDisparities = 160,        # 16の倍数
+        blockSize = 7 or 9,              # 3～11くらい
         P1 = 8 * 3 * 5**2,          # パラメータ（このままでOK）
         P2 = 32 * 3 * 5**2,         # パラメータ（このままでOK）
         disp12MaxDiff = 1,
@@ -95,7 +96,7 @@ def main():
         #volid_depths = center_region[(center_region > 0) & (center_region < 5000.0)]
         #mask = (center_region > 0) & (center_region < 5000.0) & (np.isfinite(center_region))
         #volid_depths = center_region[mask]
-        valid_disp = center_region_disp[center_region_disp > 0]
+        valid_disp = center_region_disp[(center_region_disp > 1) & (center_region_disp < 200)]
 
         
         if len(valid_disp ) > 0:

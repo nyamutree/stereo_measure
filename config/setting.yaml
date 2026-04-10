@@ -13,7 +13,7 @@ camera:
 #測定用の数値
 measure:
   #カメラの中心間の距離（㎜）
-  baseline_mm: 75.0
+  baseline_mm: 140.0
   #カメラのレンズ性能
   focal_length_px: 500.0
   #背景と物体との区別精度

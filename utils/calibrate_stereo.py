@@ -47,11 +47,16 @@ for f_l, f_r in zip(L_imgs,R_imgs):
     img_L = cv2.imread(f_l)
     img_R = cv2.imread(f_r)
 
-    gray_L = cv2.cvtColor(img_L,cv2.COLOR_RGB2GRAY)
-    gray_R = cv2.cvtColor(img_R,cv2.COLOR_RGB2GRAY)
+    gray_L = cv2.cvtColor(img_L,cv2.COLOR_BGR2GRAY)
+    gray_R = cv2.cvtColor(img_R,cv2.COLOR_BGR2GRAY)
 
+    criteria = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+    
     ret_L,corner_L = cv2.findChessboardCorners(gray_L,PATTERN_SIZE,None)
     ret_R,corner_R = cv2.findChessboardCorners(gray_R,PATTERN_SIZE,None)
+
+    corner_L = cv2.cornerSubPix(gray_L, corner_L, (11,11), (-1,-1), criteria)
+    corner_R = cv2.cornerSubPix(gray_R, corner_R, (11,11), (-1,-1), criteria)
 
     if ret_L and ret_R:
         objpoints.append(objp)
@@ -76,7 +81,7 @@ ret, m1, d1, m2, d2, R, T, E, F =cv2.stereoCalibrate(
 
 # --- [追加] 平行化（Rectification）の計算 ---
 # 左右のカメラ映像を水平に揃え、歪みを取り除くための「型紙」を作ります
-R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(m1, d1, m2, d2, gray_L.shape[::-1], R, T)
+R1, R2, P1, P2, Q, roi1, roi2 = cv2.stereoRectify(m1, d1, m2, d2, gray_L.shape[::-1], R, T, flags=cv2.CALIB_ZERO_DISPARITY, alpha=0)
 
 # 実際の補正用マップ（型紙）を作成
 mapL1, mapL2  = cv2.initUndistortRectifyMap(m1, d1, R1, P1, gray_L.shape[::-1], cv2.CV_16SC2)
