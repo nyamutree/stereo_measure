@@ -44,7 +44,7 @@ def main():
     # numDisparities: どれだけ遠近の幅を探すか(16の倍数)
     # blockSize：どれくらいの大きさの塊で一致する場所を探すか(奇数で設定)
     # stereo =  cv2.StereoBM_create(numDisparities=128, blockSize=15)
-    blockSize = (settings["camera"]["blockSize"])
+    blockSize = (settings["Stereo"]["blockSize"])
     stereo = cv2.StereoSGBM_create(
         minDisparity=0,
         numDisparities = 160,        # 16の倍数
