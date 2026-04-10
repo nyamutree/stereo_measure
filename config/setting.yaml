@@ -24,7 +24,12 @@ checkerboard:
   num_squares_x: 10
   num_squares_y: 7
   # 1マスのサイズ (mm)
-  square_size_mm: 20.0
+  square_size_mm: 21.0
+
+#距離測定時物体検出数値
+  # 物体 表面テクスチャ変数
+Stereo:
+  blockSize: 7
 
 
 
